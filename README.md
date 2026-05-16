@@ -2,10 +2,7 @@
 
 ## Overview
 
-Machine learning models in production often become unreliable when incoming real-world data changes over time, causing prediction accuracy to decrease without immediate detection.
-
 This project provides a backend monitoring system that helps track production data behavior, detect potential data drift issues early, and support reliable ML system monitoring using FastAPI, MySQL, Docker, and scalable backend architecture.
-
 The system focuses on backend architecture, API services, database integration, and Docker-based deployment for scalable ML monitoring workflows.
 
 Current implementation includes:
@@ -34,6 +31,9 @@ Current implementation includes:
 
 ## Project Structure
 
+## Project Structure
+
+```text
 drift_monitoring_system/
 │
 ├── backend/
@@ -59,3 +59,4 @@ drift_monitoring_system/
 │
 ├── .gitignore
 └── README.md
+```
