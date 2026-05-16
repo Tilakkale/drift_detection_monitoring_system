@@ -29,7 +29,6 @@ Current implementation includes:
 
 ---
 
-## Project Structure
 
 ## Project Structure
 
@@ -60,3 +59,83 @@ drift_monitoring_system/
 ├── .gitignore
 └── README.md
 ```
+
+---
+
+# Setup — Step by Step
+
+## Step 1 — Clone Repository
+
+```bash
+git clone https://github.com/Tilakkale/drift_detection_monitoring_system.git
+
+cd drift_detection_monitoring_system
+```
+
+---
+
+## Step 2 — Create Virtual Environment
+
+```bash
+python -m venv venv
+```
+
+---
+
+## Step 3 — Activate Environment
+
+### Windows
+
+```bash
+venv\Scripts\activate
+```
+
+---
+
+## Step 4 — Install Backend Dependencies
+
+```bash
+pip install -r backend/requirements.txt
+```
+
+---
+
+## Step 5 — Configure Docker & WSL2
+
+- Install Docker Desktop
+- Enable WSL2 integration
+- Verify Docker Engine is running
+
+Check Docker status:
+
+```bash
+docker --version
+docker compose version
+docker ps
+```
+
+---
+
+## Step 6 — Run FastAPI Backend
+
+```bash
+uvicorn backend.app.main:app --reload
+```
+
+---
+
+## Step 7 — Open Swagger API Documentation
+
+```text
+http://localhost:8000/docs
+```
+
+---
+
+## Step 8 — Run Docker Containers
+
+```bash
+docker compose -f docker/docker-compose.yml up --build
+```
+
+---
