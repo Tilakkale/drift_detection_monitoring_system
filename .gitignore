@@ -3,3 +3,15 @@ __pycache__/
 *.pyc
 .env
 .vscode/
+
+# Runtime state and local development output
+*.db
+*.log
+~$*
+.streamlit/secrets.toml
+
+# Generated model artifacts and evaluation output
+*.pkl
+backend/models/*.json
+backend/scripts/ground_truth_evaluation.json
+
