@@ -172,16 +172,6 @@ The Streamlit dashboard includes:
 
 ![Machine 2 evaluation](docs/media/evaluation-machine-2.png)
 
-### Video Demo
-
-The README is prepared to display the running-app recording directly from the repository:
-
-<video controls width="100%" src="docs/media/dashboard-demo.mp4">
-  Your browser does not support embedded video. Download the video from <a href="docs/media/dashboard-demo.mp4">docs/media/dashboard-demo.mp4</a>.
-</video>
-
-Add the actual recording at `docs/media/dashboard-demo.mp4`. The video should show the dashboard opening, API status, machine selection, drift analysis, model evaluation, and monitoring result. GitHub may not render repository-hosted HTML video in every README view; when that happens, attach the MP4 to a GitHub issue or pull request and replace the `src` with GitHub's generated asset URL.
-
 ## 12. Project Structure
 
 ```text
@@ -237,62 +227,48 @@ streamlit run frontend/dashboard/app.py --server.address 0.0.0.0 --server.port 8
 
 Open the dashboard at `http://127.0.0.1:8501`, the API at `http://127.0.0.1:8000`, and Swagger at `http://127.0.0.1:8000/docs`.
 
-## 15. Run Without Localhost
+## 15. Run, Evaluate, and Deploy
 
-For another device on the same private network, run `ipconfig` and find the host IPv4 address. Replace `192.168.1.25` below with that address:
+### Run on the local machine
+
+Start the API and dashboard in separate terminals:
+
+```powershell
+python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
+streamlit run frontend/dashboard/app.py --server.address 0.0.0.0 --server.port 8501
+```
+
+Open `http://127.0.0.1:8501` for the dashboard and `http://127.0.0.1:8000/docs` for the API.
+
+### Run on another device
+
+Run `ipconfig`, replace `192.168.1.25` with the host IPv4 address, and set the dashboard API URL:
 
 ```powershell
 $env:DRIFT_API_URL = "http://192.168.1.25:8000"
 python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
 ```
 
-In a second terminal:
-
 ```powershell
 $env:DRIFT_API_URL = "http://192.168.1.25:8000"
 streamlit run frontend/dashboard/app.py --server.address 0.0.0.0 --server.port 8501
 ```
 
-Open `http://192.168.1.25:8501` from the other device and test `http://192.168.1.25:8000/health`. If Windows Firewall blocks access, allow the ports on private networks:
+Open `http://192.168.1.25:8501` from the other device. Allow TCP ports `8000` and `8501` through Windows Firewall on private networks if required. This is for controlled internal demos, not public Internet exposure.
 
-```powershell
-New-NetFirewallRule -DisplayName "Drift Monitoring API and Dashboard" -Direction Inbound -Protocol TCP -LocalPort 8000,8501 -Action Allow -Profile Private
-```
-
-This is suitable for a controlled internal demo, not direct public Internet exposure.
-
-## 16. Model Workflows
+### Evaluate models
 
 ```powershell
 python backend/scripts/train_models.py
 python backend/scripts/evaluate_models.py
 python backend/scripts/evaluate_ground_truth.py
-```
-
-Generated model binaries, databases, logs, and evaluation output are ignored by Git. Store production models in a model registry or managed object storage.
-
-## 17. Production Alerting
-
-The `alerts` model records machine, alert type, severity, message, resolution state, and creation time. The `/monitor` response is the handoff point for a production alert worker.
-
-```text
-Telemetry agent -> authenticated /monitor -> alert policy
-                                      -> persist Alert
-                                      -> email/webhook/incident system
-```
-
-Before enabling paging, add a durable queue or worker, deduplication, cooldown windows, delivery retries, correlation IDs, and authenticated acknowledge/resolve operations. Configure notification credentials through a secret manager. The repository provides the alert record and monitoring response; notification delivery must be connected to the approved production service.
-
-## 18. Production Deployment and Limitations
-
-For industrial deployment, use managed MySQL with migrations and backups, restricted CORS, TLS, an authenticated reverse proxy, structured logs, metrics, tracing, health probes, model versioning, and data-quality validation. Docker assets are under `backend/Docker/` and must be validated against the target environment.
-
-Current limitations include a small set of monitored machines, dataset-specific evaluation, no automated retraining, and no built-in email/webhook dispatcher. Recommended next steps are historical drift tracking, model registry integration, Prometheus/Grafana metrics, CI/CD, role-based access control, centralized logging, and cloud deployment.
-
-## 19. Testing
-
-```powershell
 python -m pytest backend/tests -q
 ```
 
-Add integration tests for authentication, API contracts, database persistence, alert dispatch, and dashboard-to-API behavior before production rollout.
+Evaluation reports accuracy, precision, recall, F1 score, and confusion matrices for the labelled SMD test data. The verified test suite currently passes 3 tests.
+
+### Production readiness
+
+The `alerts` model stores machine, type, severity, message, resolution state, and timestamp. Connect `/monitor` to a durable alert worker for email, webhook, or incident-system delivery. Add authentication, deduplication, cooldowns, retries, audit IDs, and acknowledge/resolve operations before enabling paging.
+
+For industrial deployment, use managed MySQL, migrations, TLS, restricted CORS, an authenticated reverse proxy, secret management, structured logs, metrics, health probes, model versioning, and data-quality validation. Current limitations are dataset-specific evaluation, three monitored machines, no automated retraining, and no built-in notification dispatcher.
