@@ -142,9 +142,9 @@ The Streamlit application provides three views:
 - **Model Evaluation:** evaluation metrics and model comparison results.
 - **Monitor:** loaded models and anomaly scoring for telemetry batches.
 
-### Dashboard results
+### First Streamlit screen and results
 
-The dashboard is the operator view of the application. The Drift Analysis screen shows the live API result: average PSI `1.0406`, `13` drifted features, `3` high-confidence drift features, and `38` total features.
+The first screen of the running Streamlit app opens on **Drift Analysis**. It shows the live API result: average PSI `1.0406`, `13` drifted features, `3` high-confidence drift features, and `38` total features.
 
 ![Streamlit Drift Analysis dashboard result](docs/media/dashboard-drift-results.svg)
 
@@ -174,7 +174,14 @@ To view the live dashboard results, start the API and Streamlit app using the co
 
 ### Video demonstration
 
-This is separate from the evaluation images. When a real recording is available, add `docs/media/dashboard-demo.mp4`. The video should show the running dashboard, API status, Drift Analysis results, Model Evaluation results, and Monitor anomaly results. No video link is included until an actual recording is uploaded.
+The video should show the complete app flow in this order:
+
+1. Open the first Streamlit screen and show the API status.
+2. Run **Drift Analysis** and show Average PSI, drifted features, high-confidence drift, and the PSI chart.
+3. Open **Model Evaluation** and show accuracy, precision, recall, F1-score, and the confusion matrix.
+4. Open **Monitor** and show loaded models, anomaly count, score, and severity.
+
+The running-app recording is available at [dashboard-demo.mp4](docs/media/dashboard-demo.mp4). It shows the first dashboard screen, API status, Drift Analysis results, Model Evaluation results, and Monitor anomaly results. The file was uploaded as `dashboard-demo.mp4`; trim points can be applied once the unwanted time range is specified.
 
 ## Project Structure
 
