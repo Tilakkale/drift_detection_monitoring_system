@@ -1,62 +1,212 @@
-# Industrial Data Drift Monitoring System
+# Data Drift Detection and Anomaly Monitoring System
 
-An end-to-end monitoring application for detecting changes in server telemetry and measuring their potential impact on ML systems. The repository combines a FastAPI service, SQLAlchemy persistence, drift and anomaly detection services, evaluation scripts, and a Streamlit operations dashboard.
+An end-to-end monitoring system for detecting distribution changes in server telemetry and identifying abnormal observations. It combines PSI and KS statistical drift detection, unsupervised anomaly models, a FastAPI service, SQLAlchemy persistence, and a Streamlit operations dashboard.
 
-## Capabilities
+## 1. Overview
 
-- PSI and Kolmogorov-Smirnov feature drift analysis
-- Per-machine baselines for the Server Machine Dataset
-- Isolation Forest, Local Outlier Factor, and One-Class SVM evaluation
-- Persisted drift, monitoring, alert, and user models
-- Interactive API documentation through OpenAPI/Swagger
-- Streamlit dashboard for analysis, model evaluation, and monitoring views
-- Reproducible training and evaluation scripts
+The system answers two operational questions:
 
-## Architecture
+- Has current server data changed from the training baseline?
+- Is an individual server observation abnormal enough to investigate?
+
+It uses the Server Machine Dataset and currently evaluates Machines 1, 2, and 3. The project is a development and evaluation platform that can be extended with production telemetry ingestion, alert delivery, model registries, and retraining workflows.
+
+## 2. Problem and Solution
+
+Machine learning systems can become unreliable when production data no longer resembles development data. A model may continue responding while its inputs have shifted or contain unusual observations.
+
+This project addresses both cases:
+
+- **Data drift:** compares reference and current distributions per feature with PSI and the Kolmogorov-Smirnov test.
+- **Anomalies:** scores incoming 38-feature telemetry batches with machine-specific unsupervised models.
+- **Investigation:** exposes drift status, anomaly scores, evaluation metrics, and monitoring results through APIs and a dashboard.
+
+## 3. Objectives
+
+- Detect feature-level drift before it silently affects model behavior.
+- Identify unusual server observations in monitoring batches.
+- Compare Isolation Forest, One-Class SVM, and Local Outlier Factor.
+- Evaluate anomaly predictions against labelled test data.
+- Provide authenticated REST APIs and persistent monitoring records.
+- Give operators a practical dashboard for analysis and investigation.
+- Establish a foundation for production alerting and model maintenance.
+
+## 4. Key Features
+
+- PSI scoring with no-drift, moderate, and significant thresholds.
+- KS statistic, p-value, and drift decision for every feature.
+- High-confidence drift when PSI and KS signals agree.
+- Machine-specific Isolation Forest monitoring models.
+- One-Class SVM and LOF comparison workflows.
+- Accuracy, precision, recall, F1 score, and confusion matrix evaluation.
+- JWT authentication with password hashing.
+- FastAPI Swagger/OpenAPI documentation.
+- SQLAlchemy models for users, drift results, monitoring results, and alerts.
+- Streamlit views for drift analysis, evaluation, and live monitoring.
+
+## 5. System Architecture
 
 ```text
 Server Machine Dataset
-					|
-					v
-Training and evaluation scripts ---> persisted model artifacts
-					|
-					v
-FastAPI API ---> drift services ---> SQLAlchemy database
-		 ^                                  |
-		 |                                  v
-Streamlit dashboard <------------- monitoring results
+          |
+          v
+Training and evaluation scripts
+          |
+          +--> PSI + KS drift analysis
+          +--> Isolation Forest / One-Class SVM / LOF
+          |
+          v
+      FastAPI API --------> SQLAlchemy database
+          ^                         |
+          |                         v
+      Streamlit dashboard <--- monitoring results
 ```
 
-## Technology
+The dashboard and API are separate processes. The API owns analysis and monitoring requests; the dashboard calls the API and presents results to an operator.
+
+## 6. Technology
 
 | Layer | Technology |
 | --- | --- |
 | API | Python 3.11, FastAPI, Uvicorn |
 | Analytics | pandas, NumPy, SciPy, scikit-learn |
-| Persistence | SQLAlchemy, SQLite locally, MySQL-ready configuration |
+| Persistence | SQLAlchemy, SQLite fallback, MySQL configuration |
 | Dashboard | Streamlit, Altair |
-| Operations | Docker, Docker Compose, Alembic |
+| Security | JWT, password hashing, Pydantic validation |
+| Operations | Docker assets, Alembic configuration, Python tests |
 
-## Repository Layout
+## 7. Dataset
+
+The project uses the **Server Machine Dataset (SMD)**:
 
 ```text
-backend/
-	app/
-		api/routes/       # Auth, drift, evaluation, and monitoring endpoints
-		core/             # Configuration, security, logging, and dependencies
-		database/         # SQLAlchemy engine and session setup
-		models/           # Persistence models and generated evaluation figures
-		services/         # Drift and inference business logic
-	scripts/            # Training, evaluation, and comparison workflows
-	tests/              # Automated tests
-frontend/dashboard/   # Streamlit operational dashboard
-dataset/              # Server Machine Dataset files
-backend/Docker/       # Deployment configuration
+dataset/ServerMachineDataset/
+├── train/       # Reference telemetry
+├── test/        # Evaluation telemetry
+└── test_label/  # Ground-truth anomaly labels
 ```
 
-## Quick Start
+The monitoring endpoint validates 38 input features. Current workflows use Machines 1, 2, and 3.
 
-### 1. Install
+## 8. Drift Detection
+
+For each feature, training data is compared with current test data.
+
+The project uses two drift-detection methods:
+
+### Method 1: Population Stability Index (PSI)
+
+PSI compares the binned distribution of the reference data with the current data. It identifies how much a feature's population has shifted.
+
+```text
+PSI = sum((current_percentage - reference_percentage)
+          * ln(current_percentage / reference_percentage))
+```
+
+| PSI | Meaning |
+| --- | --- |
+| `<= 0.10` | No significant drift |
+| `> 0.10` | Moderate drift |
+| `> 0.25` | Significant drift |
+
+### Method 2: Kolmogorov-Smirnov (KS) Test
+
+The KS test compares the cumulative distributions of the reference and current values. The API records the KS statistic, p-value, and a drift decision when `p-value < 0.05`.
+
+### Combined decision
+
+The system reports a feature as high-confidence drift when both PSI and KS indicate drift. Using both methods gives operators a threshold-based measure from PSI and a statistical hypothesis-test signal from KS.
+
+## 9. Anomaly Detection and Evaluation
+
+| Model | Role |
+| --- | --- |
+| Isolation Forest | Primary model for scalable batch scoring |
+| One-Class SVM | Learns a boundary around normal observations |
+| Local Outlier Factor | Detects unusual local density |
+
+Evaluation uses labelled test data and reports accuracy, precision, recall, F1 score, and a confusion matrix. Precision, recall, and F1 are important because anomaly datasets may be imbalanced.
+
+## 10. Backend API
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| `GET` | `/` | Redirects to Swagger UI |
+| `GET` | `/health` | Health check |
+| `POST` | `/signup` | Register a user |
+| `POST` | `/login` | Authenticate and receive a token |
+| `GET` | `/profile` | Read the authenticated profile |
+| `GET` | `/analyze-drift` | Analyze train/test drift |
+| `POST` | `/evaluation/{machine_id}/run` | Run model evaluation |
+| `GET` | `/monitor/status` | Show loaded models |
+| `POST` | `/monitor` | Score a 38-feature telemetry batch |
+
+Swagger documentation is available at `http://127.0.0.1:8000/docs` after starting the API.
+
+Example health check:
+
+```powershell
+Invoke-RestMethod http://127.0.0.1:8000/health
+```
+
+Example monitoring request shape:
+
+```powershell
+$body = @{ machine_id = 1; data = @( @(0.1, 0.1, 0.1) ) } | ConvertTo-Json -Depth 5
+Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8000/monitor -ContentType "application/json" -Body $body
+```
+
+Supply exactly 38 numeric features in each row.
+
+## 11. Dashboard and Usage
+
+The Streamlit dashboard includes:
+
+- **Drift Analysis:** average PSI, drifted features, high-confidence drift, feature charts, and KS results.
+- **Model Evaluation:** evaluation metrics and comparison results.
+- **Monitor:** loaded models and anomaly scoring for telemetry batches.
+
+### Screenshots
+
+![Machine 1 evaluation](docs/media/evaluation-machine-1.png)
+
+![Machine 2 evaluation](docs/media/evaluation-machine-2.png)
+
+### Video Demo
+
+The README is prepared to display the running-app recording directly from the repository:
+
+<video controls width="100%" src="docs/media/dashboard-demo.mp4">
+  Your browser does not support embedded video. Download the video from <a href="docs/media/dashboard-demo.mp4">docs/media/dashboard-demo.mp4</a>.
+</video>
+
+Add the actual recording at `docs/media/dashboard-demo.mp4`. The video should show the dashboard opening, API status, machine selection, drift analysis, model evaluation, and monitoring result. GitHub may not render repository-hosted HTML video in every README view; when that happens, attach the MP4 to a GitHub issue or pull request and replace the `src` with GitHub's generated asset URL.
+
+## 12. Project Structure
+
+```text
+drift_monitoring_system/
+├── backend/
+│   ├── app/
+│   │   ├── api/routes/       # Auth, drift, evaluation, monitoring APIs
+│   │   ├── core/             # Config, security, logging, dependencies
+│   │   ├── database/         # SQLAlchemy engine and session setup
+│   │   ├── models/           # Database models and evaluation images
+│   │   ├── schemas/          # Request and response validation
+│   │   └── services/         # Drift and inference logic
+│   ├── scripts/              # Training and evaluation workflows
+│   ├── tests/                # Automated tests
+│   └── requirements.txt
+├── dataset/ServerMachineDataset/
+├── docs/media/               # README screenshots and app video
+├── frontend/dashboard/       # Streamlit application
+├── .streamlit/               # Streamlit configuration
+└── README.md
+```
+
+## 13. Installation
+
+Prerequisites: Python 3.11 or later and Git. MySQL and Docker are optional for deployment environments.
 
 ```powershell
 git clone https://github.com/Tilakkale/drift_detection_monitoring_system.git
@@ -66,46 +216,52 @@ python -m venv venv
 python -m pip install -r backend/requirements.txt
 ```
 
-### 2. Start the API
+## 14. Run the Applications
 
-From the repository root:
+Open two terminals from the repository root.
 
-```powershell
-python -m uvicorn backend.app.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-The API listens on every network interface. On the same computer, use `http://127.0.0.1:8000`; on another device, use `http://<HOST-LAN-IP>:8000`. Use `/docs` for Swagger UI and `/health` for a readiness check.
-
-### 3. Start the dashboard
-
-In a second terminal with the virtual environment active:
+API terminal:
 
 ```powershell
-streamlit run frontend/dashboard/app.py
+.\venv\Scripts\Activate.ps1
+python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
 ```
 
-The dashboard uses `DRIFT_API_URL` when provided and otherwise defaults to `http://127.0.0.1:8000`. Select a machine, adjust PSI buckets, and run an analysis from the sidebar.
-
-### 4. Run tests
+Dashboard terminal:
 
 ```powershell
-python -m pytest backend/tests -q
+.\venv\Scripts\Activate.ps1
+$env:DRIFT_API_URL = "http://127.0.0.1:8000"
+streamlit run frontend/dashboard/app.py --server.address 0.0.0.0 --server.port 8501
 ```
 
-## API Surface
+Open the dashboard at `http://127.0.0.1:8501`, the API at `http://127.0.0.1:8000`, and Swagger at `http://127.0.0.1:8000/docs`.
 
-The service currently exposes route groups for:
+## 15. Run Without Localhost
 
-- Authentication and user operations
-- Drift analysis by machine and PSI bucket count
-- Model evaluation
-- Monitoring and persisted results
+For another device on the same private network, run `ipconfig` and find the host IPv4 address. Replace `192.168.1.25` below with that address:
 
-The authoritative request and response schemas are available at `http://localhost:8000/docs` after starting the API.
+```powershell
+$env:DRIFT_API_URL = "http://192.168.1.25:8000"
+python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
+```
 
-## Model Workflows
+In a second terminal:
 
-Training and comparison utilities are in `backend/scripts/`:
+```powershell
+$env:DRIFT_API_URL = "http://192.168.1.25:8000"
+streamlit run frontend/dashboard/app.py --server.address 0.0.0.0 --server.port 8501
+```
+
+Open `http://192.168.1.25:8501` from the other device and test `http://192.168.1.25:8000/health`. If Windows Firewall blocks access, allow the ports on private networks:
+
+```powershell
+New-NetFirewallRule -DisplayName "Drift Monitoring API and Dashboard" -Direction Inbound -Protocol TCP -LocalPort 8000,8501 -Action Allow -Profile Private
+```
+
+This is suitable for a controlled internal demo, not direct public Internet exposure.
+
+## 16. Model Workflows
 
 ```powershell
 python backend/scripts/train_models.py
@@ -113,101 +269,30 @@ python backend/scripts/evaluate_models.py
 python backend/scripts/evaluate_ground_truth.py
 ```
 
-Generated databases, logs, serialized models, and evaluation JSON are intentionally ignored by Git. Keep production artifacts in managed object storage or a model registry rather than committing them to the application repository.
+Generated model binaries, databases, logs, and evaluation output are ignored by Git. Store production models in a model registry or managed object storage.
 
-## Dashboard Preview
+## 17. Production Alerting
 
-The Streamlit front page exposes three operational views: **Drift Analysis**, **Model Evaluation**, and **Monitor**. The controls select a machine, configure PSI buckets, launch analysis, evaluate models, and submit a test batch for anomaly scoring.
-
-![Machine 1 evaluation](docs/media/evaluation-machine-1.png)
-
-![Machine 2 evaluation](docs/media/evaluation-machine-2.png)
-
-### Video Demo
-
-Add the recorded walkthrough to `docs/media/dashboard-demo.mp4` and keep this player in the README:
-
-```html
-<video controls width="100%" src="docs/media/dashboard-demo.mp4">
-	Your browser does not support embedded video.
-</video>
-```
-
-GitHub also supports video attachments in issues and pull requests. Upload the MP4 there, copy the generated asset URL, and replace the `src` above if repository-hosted video is not rendered by the target GitHub view.
-
-## Network Access Without Localhost
-
-To open the application from another computer or phone on the same Wi-Fi/LAN, first find the Windows host address:
-
-```powershell
-ipconfig
-```
-
-Find the active adapter's IPv4 address, for example `192.168.1.25`, then open two PowerShell terminals from the repository root:
-
-```powershell
-$env:DRIFT_API_URL = "http://192.168.1.25:8000"
-python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
-```
-
-```powershell
-$env:DRIFT_API_URL = "http://192.168.1.25:8000"
-streamlit run frontend/dashboard/app.py --server.address 0.0.0.0 --server.port 8502
-```
-
-Replace `192.168.1.25` with the actual host IPv4 address. From the other device, open `http://192.168.1.25:8502`. Test the API with `http://192.168.1.25:8000/health`.
-
-If Windows Firewall blocks access, allow inbound TCP ports `8000` and `8502` for private networks, or run an elevated PowerShell rule:
-
-```powershell
-New-NetFirewallRule -DisplayName "Drift Monitoring API and Dashboard" -Direction Inbound -Protocol TCP -LocalPort 8000,8502 -Action Allow -Profile Private
-```
-
-This LAN setup is suitable for a controlled internal demo. Do not expose the development servers directly to the public Internet; use a TLS reverse proxy, authentication, restricted CORS, and managed secrets for production.
-
-## Production Deployment
-
-For a public or industrial deployment, place the services behind a DNS name and TLS reverse proxy, use managed MySQL, restrict CORS to the dashboard origin, store secrets in a secret manager, add authentication and audit logging, and run the API and dashboard as separate containers or services. Do not expose the development server directly to the Internet.
-
-Local development defaults are defined in `backend/app/core/config.py`. Do not commit secrets. For a production deployment, provide environment-specific database credentials, restrict CORS origins, place the API behind TLS termination, and run migrations before serving traffic.
-
-Docker assets are under `backend/Docker/`. Validate the compose configuration against the target environment before deployment because database credentials, volumes, health checks, and secrets are environment-specific.
-
-## Production Alerting
-
-The monitoring workflow is designed to turn drift and anomaly results into actionable alerts for operations teams. The `alerts` table stores the alert record needed for traceability:
-
-| Field | Purpose |
-| --- | --- |
-| `machine_id` | Server or monitored asset that produced the signal |
-| `alert_type` | Drift, anomaly, or other detector category |
-| `severity` | Operational priority such as `medium` or `high` |
-| `message` | Human-readable incident context |
-| `resolved` | Whether the alert has been closed |
-| `created_at` | UTC creation timestamp for audit history |
-
-The `/monitor` endpoint accepts a batch of production-shaped telemetry, validates the expected 38 features, scores it with the machine-specific Isolation Forest model, and returns anomaly count, anomaly fraction, score, and severity. This response is the handoff point for an alert worker or event pipeline.
-
-### Recommended production flow
+The `alerts` model records machine, alert type, severity, message, resolution state, and creation time. The `/monitor` response is the handoff point for a production alert worker.
 
 ```text
-Telemetry agent -> authenticated ingestion -> /monitor
-				      |
-				      v
-			      anomaly/drift policy
-				      |
-	     +------------------------+------------------------+
-	     v                        v                        v
-       persist Alert            email/webhook             incident system
-       with audit fields        notification              (PagerDuty/SNS)
+Telemetry agent -> authenticated /monitor -> alert policy
+                                      -> persist Alert
+                                      -> email/webhook/incident system
 ```
 
-For a production deployment, implement the dispatcher as a durable background worker or queue consumer. Apply deduplication and cooldown windows per machine and alert type, retry transient delivery failures, record delivery status and correlation IDs, and provide an authenticated resolve/acknowledge workflow. Notifications should use environment-managed SMTP, webhook, or cloud notification credentials; never place secrets in the README, source code, or committed `.env` files.
+Before enabling paging, add a durable queue or worker, deduplication, cooldown windows, delivery retries, correlation IDs, and authenticated acknowledge/resolve operations. Configure notification credentials through a secret manager. The repository provides the alert record and monitoring response; notification delivery must be connected to the approved production service.
 
-Recommended alert policies:
+## 18. Production Deployment and Limitations
 
-- `high`: high-confidence PSI drift or a severe anomaly score; page the on-call team.
-- `medium`: sustained moderate drift or repeated anomalies within a time window; create a ticket or team notification.
-- `resolved`: close only after the signal returns below the configured threshold for a defined recovery window.
+For industrial deployment, use managed MySQL with migrations and backups, restricted CORS, TLS, an authenticated reverse proxy, structured logs, metrics, tracing, health probes, model versioning, and data-quality validation. Docker assets are under `backend/Docker/` and must be validated against the target environment.
 
-The current repository provides the alert data model and monitoring response. Email, webhook, queue delivery, alert deduplication, and on-call integration must be connected to the deployment's approved production services before enabling paging.
+Current limitations include a small set of monitored machines, dataset-specific evaluation, no automated retraining, and no built-in email/webhook dispatcher. Recommended next steps are historical drift tracking, model registry integration, Prometheus/Grafana metrics, CI/CD, role-based access control, centralized logging, and cloud deployment.
+
+## 19. Testing
+
+```powershell
+python -m pytest backend/tests -q
+```
+
+Add integration tests for authentication, API contracts, database persistence, alert dispatch, and dashboard-to-API behavior before production rollout.
