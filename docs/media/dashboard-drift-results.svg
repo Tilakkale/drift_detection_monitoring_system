@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">Drift Monitoring System dashboard drift analysis</title>
+  <desc id="desc">Dashboard result showing average PSI 1.0406, 13 drifted features, 3 high confidence drift features, and 38 total features.</desc>
+  <rect width="1200" height="720" fill="#f8fafc"/>
+  <rect x="28" y="24" width="1144" height="150" rx="18" fill="#183568"/>
+  <rect x="28" y="24" width="1144" height="150" rx="18" fill="#2563eb" opacity=".72"/>
+  <text x="70" y="85" font-family="Arial, sans-serif" font-size="38" font-weight="700" fill="white">Drift Monitoring System</text>
+  <text x="70" y="125" font-family="Arial, sans-serif" font-size="19" fill="#e2e8f0">Drift Analysis | PSI and KS monitoring for server telemetry</text>
+  <g font-family="Arial, sans-serif">
+    <rect x="28" y="202" width="270" height="112" rx="10" fill="white" stroke="#dbe3ef"/>
+    <rect x="312" y="202" width="270" height="112" rx="10" fill="white" stroke="#dbe3ef"/>
+    <rect x="596" y="202" width="270" height="112" rx="10" fill="white" stroke="#dbe3ef"/>
+    <rect x="880" y="202" width="292" height="112" rx="10" fill="white" stroke="#dbe3ef"/>
+    <text x="50" y="238" font-size="16" fill="#475569">Average PSI</text><text x="50" y="283" font-size="34" fill="#0f172a">1.0406</text>
+    <text x="334" y="238" font-size="16" fill="#475569">Drifted Features</text><text x="334" y="283" font-size="34" fill="#0f172a">13</text>
+    <text x="618" y="238" font-size="16" fill="#475569">High Confidence Drift</text><text x="618" y="283" font-size="34" fill="#0f172a">3</text>
+    <text x="902" y="238" font-size="16" fill="#475569">Total Features</text><text x="902" y="283" font-size="34" fill="#0f172a">38</text>
+  </g>
+  <rect x="28" y="342" width="1144" height="344" rx="12" fill="white" stroke="#dbe3ef"/>
+  <text x="58" y="388" font-family="Arial, sans-serif" font-size="25" font-weight="700" fill="#0f172a">PSI Score Per Feature</text>
+  <line x1="100" y1="620" x2="1030" y2="620" stroke="#94a3b8"/><line x1="100" y1="420" x2="100" y2="620" stroke="#94a3b8"/>
+  <line x1="100" y1="570" x2="1030" y2="570" stroke="#e2e8f0"/><line x1="100" y1="520" x2="1030" y2="520" stroke="#e2e8f0"/><line x1="100" y1="470" x2="1030" y2="470" stroke="#e2e8f0"/>
+  <text x="62" y="625" font-family="Arial, sans-serif" font-size="13" fill="#64748b">0</text><text x="58" y="575" font-family="Arial, sans-serif" font-size="13" fill="#64748b">5</text><text x="52" y="525" font-family="Arial, sans-serif" font-size="13" fill="#64748b">10</text><text x="52" y="475" font-family="Arial, sans-serif" font-size="13" fill="#64748b">15</text>
+  <rect x="150" y="616" width="46" height="4" fill="#f59e0b"/><text x="145" y="645" font-family="Arial, sans-serif" font-size="13" fill="#475569">feature_1</text>
+  <rect x="290" y="436" width="46" height="184" fill="#ef4b3f"/><text x="271" y="432" font-family="Arial, sans-serif" font-size="13" fill="#ef4b3f">18.370</text><text x="280" y="645" font-family="Arial, sans-serif" font-size="13" fill="#475569">feature_27</text>
+  <rect x="430" y="435" width="46" height="185" fill="#ef4b3f"/><text x="411" y="431" font-family="Arial, sans-serif" font-size="13" fill="#ef4b3f">18.421</text><text x="420" y="645" font-family="Arial, sans-serif" font-size="13" fill="#475569">feature_37</text>
+  <rect x="570" y="604" width="46" height="16" fill="#f59e0b"/><text x="560" y="645" font-family="Arial, sans-serif" font-size="13" fill="#475569">feature_6</text>
+  <rect x="710" y="589" width="46" height="31" fill="#f59e0b"/><text x="697" y="645" font-family="Arial, sans-serif" font-size="13" fill="#475569">feature_7</text>
+  <rect x="850" y="603" width="46" height="17" fill="#f59e0b"/><text x="831" y="645" font-family="Arial, sans-serif" font-size="13" fill="#475569">feature_24</text>
+  <circle cx="1060" cy="475" r="7" fill="#22c55e"/><text x="1075" y="480" font-family="Arial, sans-serif" font-size="15" fill="#475569">No Drift</text>
+  <circle cx="1060" cy="510" r="7" fill="#f59e0b"/><text x="1075" y="515" font-family="Arial, sans-serif" font-size="15" fill="#475569">Moderate</text>
+  <circle cx="1060" cy="545" r="7" fill="#ef4b3f"/><text x="1075" y="550" font-family="Arial, sans-serif" font-size="15" fill="#475569">Significant</text>
+</svg>
